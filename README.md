@@ -11,7 +11,7 @@ It should print a light blue color if it works.
 
   NOTE: because of the use of escape sequences, Ctrl+C might jack up your
   terminal colors temporarily. This is because the program can be terminated
-  before it has a change to signal the end of colored text.
+  before it has a chance to signal the end of colored text.
   To get around this, the SIGINT signal is registered. When it is received,
   subsequent calls to `delay()` will terminate the application.
   Interruptions are detected in `main()` by looking for a thrown
@@ -20,9 +20,9 @@ It should print a light blue color if it works.
   calls to `begin()`, and make sure to call `cleanup()` before exiting.
 
   ## How to use:
-  
-  * copy or change your .ino sketch file to a .c or .cpp
-  * Put this .h file in the same directory
+
+  * Rename your .ino sketch file to .cpp
+  * Put Adafruit_NeoPixel_Mock.h file in the same directory as your sketch
   * then, in your sketch
       - change `#include <Adafruit_NeoPixel.h>` to `#include <Adafruit_NeoPixel_Mock.h>`
       - make sure all needed prototypes are defined (Arduino compiler
@@ -45,4 +45,4 @@ It should print a light blue color if it works.
           return 0;
         }
         ```
-  * compile: `g++ -I . strandtest.c -std=c++11 -o strandtest`
+  * compile: (if sketch name is strandtest) `g++ -I . strandtest.cpp -std=c++11 -o strandtest`
