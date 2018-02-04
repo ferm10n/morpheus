@@ -27,6 +27,7 @@ It should print a light blue color if it works.
       - change `#include <Adafruit_NeoPixel.h>` to `#include <Adafruit_NeoPixel_Mock.h>`
       - make sure all needed prototypes are defined (Arduino compiler
         automagically creates them during compilation!)
+      - **you MUST include a call to delay() in loop() or it will not be able to terminate from SIGINT**
       - add this main:
         ```
         int main () {
