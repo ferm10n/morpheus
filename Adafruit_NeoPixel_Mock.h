@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sstream>
+#include <math.h>
 
 typedef uint8_t byte; // i can haz a bite? omnomnom
 
