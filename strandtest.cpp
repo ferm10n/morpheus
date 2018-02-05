@@ -9,7 +9,10 @@
 #define PIXEL_PIN 6
 #define PIXEL_COUNT 60
 
-const float maxPeriod = 10;
+const float minPeriod = PIXEL_COUNT * .2;
+const float maxPeriod = PIXEL_COUNT;
+const float minSpeed = -1;
+const float maxSpeed = 1;
 
 // Added prototypes
 uint32_t Wheel(byte);
@@ -48,6 +51,24 @@ struct Color {
     g = 255;
     b = 255;
   }
+  Color(byte hue) {
+    hue = 255 - hue;
+    if(hue < 85) {
+      r = 255 - hue * 3;
+      g = 0;
+      b = hue * 3;
+    } else if(hue < 170) {
+      hue -= 85;
+      r = 0;
+      g = hue * 3;
+      b = 255 - hue * 3;
+    } else {
+      hue -= 170;
+      r = hue * 3;
+      g = 255 - hue * 3;
+      b = 0;
+    }
+  }
 };
 
 class Deltable {
@@ -80,19 +101,22 @@ public:
     value = previousValue + (target - previousValue)*y*y;
   }
 
-  bool isClose () {
-    return (abs(value - target) < .1);
+  bool isDone () {
+    return i == 1;
   }
 };
 
+bool chance (float percent) {
+  return random(0, 100) < percent * 100;
+}
 class PixelLayer {
 public:
   Color color;
-  float speed;
+  Deltable hue = Deltable(0);
+  Deltable speed = Deltable(0);
   float position;
   float offset;
   float frequency;
-  float fade;
   Deltable period = Deltable(PIXEL_COUNT * 10);
   float targetPeriod;
 
@@ -100,6 +124,7 @@ public:
     color = Color();
     position = 0;
     offset = 0;
+    period.go(maxPeriod, .005);
   }
 
   Color get (int pixelIndex) {
@@ -114,10 +139,21 @@ public:
   }
 
   void update () {
+    speed.update();
     period.update();
-    if (period.isClose()) period.go(period.target == 10 ? 50 : 10, .01);
+    if (hue.isDone() && (speed.isDone() || period.isDone())) hue.go(random(0, 255), .005);
+    if (speed.isDone() && chance(.001)) speed.go(random(-1,1), .005);
+    if (period.isDone() && chance(.01)) period.go(random(minPeriod, maxPeriod), .005);
+
+
+    position += speed.value;
+    while (position < 0) position += PIXEL_COUNT;
+    while (position > PIXEL_COUNT) position -= PIXEL_COUNT;
 
     offset = period.value - (float) PIXEL_COUNT;
+
+    hue.update();
+    color = Color(hue.value);
   }
 };
 
@@ -136,7 +172,6 @@ void setup() {
 
 void loop() {
   l1.update();
-  // l1.position += .1;
   for (int i = 0; i < PIXEL_COUNT; i++) {
     Color pixel = l1.get(i);
     strip.setPixelColor(i, strip.Color(pixel.r, pixel.g, pixel.b));
