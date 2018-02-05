@@ -50,6 +50,41 @@ struct Color {
   }
 };
 
+class Deltable {
+private:
+  float i = 0;
+  float speed = 0;
+public:
+  float value;
+  float target;
+  float previousValue = 0;
+
+  Deltable (float initialValue) {
+    value = initialValue;
+    previousValue = 0;
+    target = value;
+    i = 1;
+  }
+
+  void go (float newTarget, float stepSpeed) {
+    i = 0;
+    speed = stepSpeed;
+    previousValue = value;
+    target = newTarget;
+  }
+
+  void update () {
+    i += speed;
+    if (i > 1) i = 1;
+    float y = sin(.5*PI*i);
+    value = previousValue + (target - previousValue)*y*y;
+  }
+
+  bool isClose () {
+    return (abs(value - target) < .1);
+  }
+};
+
 class PixelLayer {
 public:
   Color color;
@@ -58,20 +93,19 @@ public:
   float offset;
   float frequency;
   float fade;
-  float period;
+  Deltable period = Deltable(PIXEL_COUNT * 10);
   float targetPeriod;
 
   PixelLayer () {
     color = Color();
     position = 0;
     offset = 0;
-    period = 3;
   }
 
   Color get (int pixelIndex) {
     Color pixel = color;
     float x = fmod((pixelIndex + position), PIXEL_COUNT);
-    float intensity = cos((PI/period)*(x + offset*.5));
+    float intensity = cos((PI/period.value)*(x + offset*.5));
     intensity *= intensity;
     pixel.r *= intensity;
     pixel.g *= intensity;
@@ -80,12 +114,10 @@ public:
   }
 
   void update () {
-    if (50 - period < 1) { targetPeriod = 10; }
-    if (period - 10 < 1) { targetPeriod = 50; }
-    // if (period > maxPeriod) targetPeriod = maxPeriod;
-    period += (targetPeriod - period) * .01;
+    period.update();
+    if (period.isClose()) period.go(period.target == 10 ? 50 : 10, .01);
 
-    offset = period - (float) PIXEL_COUNT;
+    offset = period.value - (float) PIXEL_COUNT;
   }
 };
 
@@ -97,8 +129,6 @@ void setup() {
     if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
   #endif
   // End of trinket special code
-
-  l1.period = PIXEL_COUNT*10;
 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
