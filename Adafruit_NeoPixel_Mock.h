@@ -3,6 +3,8 @@
 #define NEO_GRB 0
 #define NEO_RGB 0
 #define NEO_RGBW 0
+#define PI 3.1415926535897932384626433832795
+#define M_PI 3.141592653589793238462643
 
 #include <vector>
 #include <cstdint>
