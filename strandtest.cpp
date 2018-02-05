@@ -1,11 +1,15 @@
 // Adapted from https://github.com/adafruit/Adafruit_NeoPixel/blob/master/examples/strandtest/strandtest.ino
-#include <Adafruit_NeoPixel_Mock.h>
 #ifdef __AVR__
+  #include <Adafruit_NeoPixel.h>
   #include <avr/power.h>
+#else
+  #include <Adafruit_NeoPixel_Mock.h>
 #endif
 
 #define PIXEL_PIN 6
 #define PIXEL_COUNT 60
+
+const float maxPeriod = 10;
 
 // Added prototypes
 uint32_t Wheel(byte);
@@ -55,6 +59,7 @@ public:
   float frequency;
   float fade;
   float period;
+  float targetPeriod;
 
   PixelLayer () {
     color = Color();
@@ -66,12 +71,21 @@ public:
   Color get (int pixelIndex) {
     Color pixel = color;
     float x = fmod((pixelIndex + position), PIXEL_COUNT);
-    float intensity = sin((PI/period)*(x + offset*.5));
+    float intensity = cos((PI/period)*(x + offset*.5));
     intensity *= intensity;
     pixel.r *= intensity;
     pixel.g *= intensity;
     pixel.b *= intensity;
     return pixel;
+  }
+
+  void update () {
+    if (50 - period < 1) { targetPeriod = 10; }
+    if (period - 10 < 1) { targetPeriod = 50; }
+    // if (period > maxPeriod) targetPeriod = maxPeriod;
+    period += (targetPeriod - period) * .01;
+
+    offset = period - (float) PIXEL_COUNT;
   }
 };
 
@@ -84,29 +98,24 @@ void setup() {
   #endif
   // End of trinket special code
 
-  l1.period = 90;
-  std::cout << l1.frequency <<  std::endl;
+  l1.period = PIXEL_COUNT*10;
 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
 }
 
-float deltaP = .2;
-int deltaPdir = 1;
 void loop() {
-  l1.period += deltaP * deltaPdir;
-  if (l1.period > 50) { deltaPdir = -1; }
-  if (l1.period < 10) { deltaPdir = 1; }
-  l1.offset = l1.period - (float) PIXEL_COUNT;
-  l1.position += .1;
+  l1.update();
+  // l1.position += .1;
   for (int i = 0; i < PIXEL_COUNT; i++) {
     Color pixel = l1.get(i);
     strip.setPixelColor(i, strip.Color(pixel.r, pixel.g, pixel.b));
-    strip.show();
   }
-  delay(1);
+  strip.show();
+  delay(10);
 }
 
+#ifndef __AVR__
 // Added main
 int main() {
   setup();
@@ -123,3 +132,4 @@ int main() {
   }
   return 0;
 }
+#endif
