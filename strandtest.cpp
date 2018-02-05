@@ -145,7 +145,6 @@ public:
     if (speed.isDone() && chance(.001)) speed.go(random(-1,1), .005);
     if (period.isDone() && chance(.01)) period.go(random(minPeriod, maxPeriod), .005);
 
-
     position += speed.value;
     while (position < 0) position += PIXEL_COUNT;
     while (position > PIXEL_COUNT) position -= PIXEL_COUNT;
@@ -158,6 +157,7 @@ public:
 };
 
 PixelLayer l1;
+PixelLayer l2;
 
 void setup() {
   // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
@@ -172,9 +172,17 @@ void setup() {
 
 void loop() {
   l1.update();
+  l2.update();
   for (int i = 0; i < PIXEL_COUNT; i++) {
-    Color pixel = l1.get(i);
-    strip.setPixelColor(i, strip.Color(pixel.r, pixel.g, pixel.b));
+    Color pixel1 = l1.get(i);
+    Color pixel2 = l2.get(i);
+    int r = pixel1.r + pixel2.r;
+    int g = pixel1.g + pixel2.g;
+    int b = pixel1.b + pixel2.b;
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+    strip.setPixelColor(i, strip.Color(r, g, b));
   }
   strip.show();
   delay(10);
