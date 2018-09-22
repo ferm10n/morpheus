@@ -3,6 +3,7 @@
 #define NEO_GRB 0
 #define NEO_RGB 0
 #define NEO_RGBW 0
+#define PI 3.14159265
 
 #include <vector>
 #include <cstdint>
@@ -11,8 +12,14 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sstream>
+#include <math.h>
 
 typedef uint8_t byte; // i can haz a bite? omnomnom
+
+long random(long min, long max) {
+  if (max - min == 0) return 0;
+  return (rand() % (max-min)) + min;
+}
 
 class Adafruit_NeoPixel {
 public:
