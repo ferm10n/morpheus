@@ -1,7 +1,9 @@
 // Adapted from https://github.com/adafruit/Adafruit_NeoPixel/blob/master/examples/strandtest/strandtest.ino
-#include <Adafruit_NeoPixel_Mock.h>
 #ifdef __AVR__
+  #include <Adafruit_NeoPixel.h>
   #include <avr/power.h>
+#else
+  #include <Adafruit_NeoPixel_Mock.h>
 #endif
 
 #define PIN 6
@@ -142,7 +144,7 @@ uint32_t Wheel(byte WheelPos) {
   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
-// Added main
+#ifndef __AVR__
 int main() {
   setup();
   try {
@@ -158,3 +160,4 @@ int main() {
   }
   return 0;
 }
+#endif
