@@ -21,7 +21,7 @@ It should print a light blue color if it works.
 
   ## How to use:
 
-  * Rename your .ino sketch file to .cpp
+  * Rename your .ino sketch file to .cpp, or keep your .ino file and move everything in it to a new .cpp file in the same directory
   * Put Adafruit_NeoPixel_Mock.h file in the same directory as your sketch
   * then, in your sketch
       - change `#include <Adafruit_NeoPixel.h>` to `#include <Adafruit_NeoPixel_Mock.h>`
@@ -46,3 +46,5 @@ It should print a light blue color if it works.
         }
         ```
   * compile: (if sketch name is strandtest) `g++ -I . strandtest.cpp -std=c++11 -o strandtest`
+  
+See strandtest_example.cpp for an example which compiles for both pc and arduino based micros
