@@ -1,0 +1,31 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "This serves as a drop in replacement for Adafruit_NeoPixel.h, allowing you to experiment with patterns and such without an arduino or other microcontroller!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon -w index.js index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-watch": "^0.5.9",
+    "nodemon": "^1.18.9",
+    "socket.io": "^2.2.0",
+    "socket.io-client": "^2.2.0",
+    "webpack": "^4.27.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ferm10n/neopixel-emulator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ferm10n/neopixel-emulator/issues"
+  },
+  "homepage": "https://github.com/ferm10n/neopixel-emulator#readme"
+}
