@@ -143,23 +143,3 @@ uint32_t Wheel(byte WheelPos) {
   WheelPos -= 170;
   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
-
-#ifndef __AVR__
-int main() {
-  // putchar(1); // how many strips
-  // putchar(5); // how many lights in strip n
-  setup();
-  try {
-    while (true) {
-      loop();
-    }
-  } catch (char c) {
-    if (c == 'i') { // 'i' for interrupt!
-      strip.cleanup();
-    } else {
-      throw c;
-    }
-  }
-  return 0;
-}
-#endif
