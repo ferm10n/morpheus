@@ -1,5 +1,16 @@
 # neopixel-emulator
 
+## Getting started
+
+* Nodejs ~10.14.1, and g++ are required
+* Clone this repo and run `npm i`
+* Replace strandtest.ino with your sketch.
+  * make sure to update the properties of `config` in **main.js** accordingly. They should be self-explanitory.
+* `npm start`. this will compile and run your arduino sketch.
+  * depending on what special arduino functions your sketch uses, you might need to implement them in **Adafruit_NeoPixel_mock.h**. I put some of the common ones in there already but this is the most likely place for things to fail when switching to a new sketch.
+* implement `onDataSegment()` in **public/index.js**. See the example there for details. This gets called for every update to the LED outputs.
+* open your browser to http://localhost:8080
+
 ## Transactions
 
 * start cp
@@ -19,53 +30,3 @@
   * we refer to this as a `DataSegment`
   * node uses the range of leds to determine how many bytes to read B = (M * 3)
   * B bytes are then read.
-
-## Emulate an arduino neopixel setup right from your terminal
-
-This serves as a drop in replacement for Adafruit_NeoPixel.h, allowing you to experiment with patterns and such without an arduino or other microcontroller!
-
-Your terminal must support Truecolor ANSI escape sequences for 8bpc color. (xterm is usually sufficient)
-
-
-Test your terminal support with: `printf "\x1b[38;2;40;177;249mTRUECOLOR\x1b[0m\n"`
-It should print a light blue color if it works.
-
-  NOTE: because of the use of escape sequences, Ctrl+C might jack up your
-  terminal colors temporarily. This is because the program can be terminated
-  before it has a chance to signal the end of colored text.
-  To get around this, the SIGINT signal is registered. When it is received,
-  subsequent calls to `delay()` will terminate the application.
-  Interruptions are detected in `main()` by looking for a thrown
-  'i' char. Probably not the most elegant solution, but it works.
-  If you want to do something different, then remove the try-catch in your main,
-  calls to `begin()`, and make sure to call `cleanup()` before exiting.
-
-  ## How to use:
-
-  * Rename your .ino sketch file to .cpp, or keep your .ino file and move everything in it to a new .cpp file in the same directory
-  * Put Adafruit_NeoPixel_Mock.h file in the same directory as your sketch
-  * then, in your sketch
-      - change `#include <Adafruit_NeoPixel.h>` to `#include <Adafruit_NeoPixel_Mock.h>`
-      - make sure all needed prototypes are defined (Arduino compiler
-        automagically creates them during compilation!)
-      - add this main:
-        ```
-        int main () {
-          setup();
-          try {
-            while (true) {
-              loop();
-            }
-          } catch (char c) {
-            if (c == 'i') { // 'i' for interrupt!
-              strip.cleanup();
-            } else {
-              throw c;
-            }
-          }
-          return 0;
-        }
-        ```
-  * compile: (if sketch name is strandtest) `g++ -I . strandtest.cpp -std=c++11 -o strandtest`
-  
-See strandtest_example.cpp for an example which compiles for both pc and arduino based micros

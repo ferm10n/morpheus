@@ -9,7 +9,6 @@ const app = express();
 const SocketIO = require('socket.io');
 const chalk = require('chalk');
 const assert = require('assert');
-// const { Writable } = require('stream');
 
 // hey there, I've been experimenting a lot with JSDoc documentation for types and whatnot.
 // It might looks really different to what you might be used to, but the idea is that
@@ -19,29 +18,29 @@ const assert = require('assert');
 
 const config = {
   /**
-     * Path to .ino file
-     */
+   * Path to .ino file
+   */
   inoPath: path.resolve('./strandtest.ino'),
   /**
-     * Other source files involved in the .ino project.
-     * These will have fs watchers attached to them so they recompile when changes are made.
-     */
+   * Other source files involved in the .ino project.
+   * These will have fs watchers attached to them so they recompile when changes are made.
+   */
   otherSourceFiles: [
     // path.resolve('file1'),
     // path.resolve('file2'),
     path.resolve('./Adafruit_NeoPixel_Mock.h')
   ],
   /**
-     * The .ino will be copied to a .cpp. Store the path of this
-     */
+   * The .ino will be copied to a .cpp. Stores the path of this
+   */
   cppPath: null,
   /**
-     * Path to compile and run the exe from
-     */
+   * Path to compile and run the exe from
+   */
   exePath: path.resolve('./a.out'),
   /**
-     * The shell command used to compile the .cpp
-     */
+   * The shell command used to compile the .cpp
+   */
   compileCommand: null
 };
 config.cppPath = config.inoPath.replace(/(\.ino)$/, '.cpp');
@@ -201,10 +200,9 @@ async function processStream (cpStream) {
       startIdx,
       buffer: new Uint8Array(segmentData).buffer // socket.io can only send ArrayBuffer type
     };
-    assert.ok(segmentPayload.buffer.byteLength === 15);
     io.sockets.emit('data-segment', segmentPayload);
     outputs.get(segmentId).buffer.set(segmentData, startIdx); // save
-    console.log('data-segment', segmentId, segmentData);
+    // console.log('data-segment', segmentId, segmentData);
   }
 }
 
@@ -283,13 +281,21 @@ function sendOutputs (socket) {
 
 // Attach watchers to source files
 watch([config.inoPath, ...config.otherSourceFiles], compileAndRun);
+watch(path.resolve('./public'), { recursive: true }, () => {
+  console.log(chalk.blue('signal-reload to client'))
+  io.sockets.emit('signal-reload');
+});
 
 // initial compile
 compileAndRun();
 
-// start server
-
+// start server:
 app.use(express.static(path.join(__dirname, 'public'))); // serve files from public folder
+const three = fs.readFileSync(require.resolve('three'));
+app.get('/lib/three.js', (req, res) => {
+  res.send(three);
+  res.end();
+});
 server.listen(PORT, '0.0.0.0', (err) => {
   if (err) {
     throw err;

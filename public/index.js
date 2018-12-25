@@ -1,36 +1,24 @@
-/* globals io */
-const div = document.querySelector('#app');
+/* globals pixels, outputs, createPixelsFromOutput, updatePixelsFromOutput */
 
-const socket = io();
-function onConnect () {
-  socket.emit('get-outputs'); // request outputs when connected
-}
-socket.on('connect', onConnect);
+window.pixels = null;
 
 /**
- * @type {Map<number, {name: string, buffer: Uint8Array}>}
+ * @param {{name: string, buffer: Uint8Array}} ds
+ * @param {{id: number, buffer: ArrayBuffer, startIdx: number}} update
  */
-let outputs = null;
+window.onDataSegment = function (ds, update) {
+  if (!pixels) { // set up pixels
+    window.pixels = createPixelsFromOutput(outputs.get(0));
 
-socket.on('outputs', newOutputs => {
-  // when server sends outputs
-  outputs = new Map();
-  for (let output of newOutputs) { // extract data out of outputs
-    outputs.set(output.id, {
-      name: output.name,
-      buffer: new Uint8Array(output.buffer)
-    });
-  }
-});
+    // I'm planning on adding convenience methods to aid in positioning LED strips in 3D space
 
-socket.on('data-segment', update => {
-  // when server sends an update
-  if (!outputs) {
-    return;
+    for (let i = 0; i < pixels.length; i++) {
+      const pixel = pixels[i];
+      // position each pixel
+      pixel.position.x = (i - (pixels.length / 2)) * 2;
+    }
+  } else {
+    // not much is needed to be implemented once the pixel's positions are set up.
+    updatePixelsFromOutput(pixels, outputs.get(0));
   }
-  const ds = outputs.get(update.id);
-  ds.buffer.set(new Uint8Array(update.buffer), update.startIdx);
-  div.innerHTML = `name: ${ds.name}<br>
-    buffer: ${ds.buffer.toString()}
-  `;
-});
+};
