@@ -25,11 +25,14 @@ class Adafruit_NeoPixel {
   public:
     static int instances; // counter for how many instances have been created
     static std::ostringstream initializerPayload; // used to build the initializer message for nodejs
+    static bool sentInit;
     
     static uint32_t Color (byte, byte, byte);
     
     int id;
     std::vector<uint32_t> pixels; // container for pixel data
+    int startIdx = 0;
+    int stopIdx = 0;
 
     Adafruit_NeoPixel(int, int, int);
 
@@ -40,6 +43,7 @@ class Adafruit_NeoPixel {
 };
 int Adafruit_NeoPixel::instances = 0;
 std::ostringstream Adafruit_NeoPixel::initializerPayload = std::ostringstream();
+bool Adafruit_NeoPixel::sentInit = 0;
 
 uint32_t Adafruit_NeoPixel::Color (byte r, byte g, byte b) {
   uint32_t color = r;
@@ -53,37 +57,41 @@ uint32_t Adafruit_NeoPixel::Color (byte r, byte g, byte b) {
 Adafruit_NeoPixel::Adafruit_NeoPixel(int pixelCount, int pinNum, int mode) {
   id = Adafruit_NeoPixel::instances;
   Adafruit_NeoPixel::instances++;
-  Adafruit_NeoPixel::initializerPayload << "strip_" << id << ":" << pixelCount << std::endl;
+  Adafruit_NeoPixel::initializerPayload << "strip_" << id << ":" << pixelCount * 3 << std::endl;
 
   pixels = std::vector<uint32_t>(pixelCount, 0); // init all pixels to black
+  stopIdx = pixelCount * 3; // 3 bytes per pixel
 }
 
 void Adafruit_NeoPixel::show () {
-  // std::cout << 0 << ' ' << pixels.size() << '\n';
-  // putchar(0); // strip index
-  // putchar(pixels.size()); // light count
+  if (!Adafruit_NeoPixel::sentInit) {
+    std::cout << Adafruit_NeoPixel::instances << std::endl; // how many outputs
+  
+    // is there really no good method for piping an ostream to another ostream,
+    // other than converting it to a string and then piping that?
 
-  // std::ostringstream os; // we build a string
-  // os << '\n'; // change this to '\r' if you don't want the terminal to scroll. But this is better performance wise.
+    std::string s = Adafruit_NeoPixel::initializerPayload.str(); // convert init payload to string
+    std::cout << s; // write init payload
+
+    std::cout << 0 << std::endl; // how many inputs
+
+    Adafruit_NeoPixel::sentInit = 1;
+  }
+
+  // segment header
+  std::cout << id << ':' << startIdx << ':' << stopIdx << std::endl;
+
+  // segment data
   for (int i = 0; i < pixels.size(); i++) {
     uint32_t c = pixels.at(i);
     // bitfidly magic
     int r = (uint8_t)(c >> 16),
         g = (uint8_t)(c >> 8)&0xFF,
         b = (uint8_t)c&0xFF;
-    // os << "\x1b[48;2;" << r << ";" << g << ";" << b << "m \x1b[0m";
-    // std::cout << r << ' ' << g << ' ' << b << ' ';
-    // putchar(r);
-    // putchar(g);
-    // putchar(b);
-    // std::cout << 255 << 255 << '\n';
+    putchar(r);
+    putchar(g);
+    putchar(b);
   }
-  // putchar('\n');
-  // std::cout << '\n';
-  // std::cout << "!\n";
-  // std::string s = os.str();
-  // std::cout << s;
-  // std::cout << 1 << std::endl;
 }
 
 uint16_t Adafruit_NeoPixel::numPixels () {
@@ -106,12 +114,7 @@ void setup ();
 void loop ();
 int main() {
   setup();
-  std::cout << Adafruit_NeoPixel::instances << std::endl; // how many outputs
-  // TODO: converting to string strips the "flush" from endl.
-  // in node, implement something that will chomp the lines and emit data on each LINE.
-  // I suppose it's okay to buffer data spanning multiple lines too.
-  std::string s = Adafruit_NeoPixel::initializerPayload.str(); // convert init payload to string
-  std::cout << s; // write output properties
+  
   while (true) {
     loop();
   }

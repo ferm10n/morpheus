@@ -8,7 +8,8 @@ const http = require('http');
 const app = express();
 const SocketIO = require('socket.io');
 const chalk = require('chalk');
-const { Writable } = require('stream');
+const assert = require('assert');
+// const { Writable } = require('stream');
 
 // hey there, I've been experimenting a lot with JSDoc documentation for types and whatnot.
 // It might looks really different to what you might be used to, but the idea is that
@@ -70,11 +71,6 @@ let outputs = new Map();
  */
 let inputs = new Map();
 
-/**
- * @type {DataSegment}
- */
-let activeDataSegment = null;
-
 const server = http.createServer(app);
 
 const io = new SocketIO(server);
@@ -93,7 +89,8 @@ async function compileAndRun () {
     await new Promise((resolve) => {
       if (!cp) { // if it is not running, proceed immediate
         resolve();
-      } else { // stop the exe
+      } else {
+        // stop the exe
         console.log('Stopping exe before compiling');
         cp.removeAllListeners('close'); // remove the current close handler (if any)
         const forceKill = setTimeout(() => {
@@ -118,7 +115,9 @@ async function compileAndRun () {
       stdio: ['ignore', 'pipe', process.stderr]
     });
 
-    cp.stdout.on('data');
+    processStream(cp.stdout).catch(err => {
+      console.error(chalk.red('stream interrupted'), err);
+    });
   } catch (err) {
     console.error(chalk.red('compile failed!'));
     console.error(chalk.yellow('Waiting for changes before trying to compile again.'));
@@ -131,104 +130,136 @@ async function compileAndRun () {
 
 class DataSegment {
   /**
-     * @param {{id: number, name: string, length: number}}
-     */
+   * @param {{id: number, name: string, length: number}}
+   */
   constructor ({ id, name, length }) {
     this.id = id;
     this.name = name;
     this.buffer = new Uint8Array(length);
-
-    /** @type {number} */
-    this.startIdx = null;
-
-    /** @type {number} */
-    this.stopIdx = null;
-
-    /**
-         * the next idx expected to be EATED
-         */
-    this.nextIdx = null;
-  }
-
-  /**
-     * @param {{startIdx: number, stopIdx: number}}
-     * Prepares this data segment for receiving data for indices startIdx to stopIdx
-     */
-  activate ({ startIdx, stopIdx }) {
-    this.startIdx = startIdx;
-    this.stopIdx = stopIdx;
-    this.nextIdx = this.startIdx; // reset tracker
-  }
-
-  /**
-     * Processes incoming data. OMNOMNOM
-     * "WHY IS THE BASE DATA UNIT FOR COMPUTERS CALLED A BYTE? BECAUSE ITS THE MOST DATA IT CAN CHEW ON AT A TIME!"
-     * @param {Buffer} data
-     */
-  nom (data) {
-    this.destination.buffer.set(data, this.nextIdx);
-    this.nextIdx += data.length;
-
-    if (this.full) {
-      io.sockets.emit('data-segment', {
-        id: this.id,
-        startIdx: this.startIdx,
-        buffer: this.stopIdx - this.startIdx // take the difference of positions to find the width
-      });
-    }
-  }
-
-  get full () {
-    return this.nextIdx > this.ledStopIdx;
   }
 }
 
-/**
- * @param {Buffer} data - data from child process. called at least once for each line of output.
- */
-function onCpData (data) {
-  console.log('data', chalk.yellow(data.toString()));
-  // we handle incoming data differently depending on application state.
-  // each block here is a different state
-  if (outputs.expectedSize === undefined) { // state: determining how many outputs from cp
-    outputs.expectedSize = parseInt(data.toString());
-  } else if (outputs.size < outputs.expectedSize) { // state: determining properties of outputs
-    // outputCount will be 0 when all outputs are set up
-    // line N,i: get name and buffer length of output i
+async function processStream (cpStream) {
+  cp.stdout.pause();
+  console.assert(cp.stdout.isPaused(), 'stream is paused');
+  console.assert(cp.stdout.readable, 'reading is allowed');
+
+  // reset variables
+  outputs = new Map();
+  inputs = new Map();
+
+  // determine how many outputs
+  outputs.expectedSize = parseInt(await bufferStreamUntilNewline(cpStream));
+  console.log('# of outputs:', outputs.expectedSize);
+  assert.ok(outputs.expectedSize >= 0);
+
+  // determine properties of outputs
+  for (let i = 0; i < outputs.expectedSize; i++) {
     // format: <stripName>:<length>
-    const outputProperties = data.toString().split(':');
+    const outputProperties = (await bufferStreamUntilNewline(cpStream)).toString().split(':');
 
     const ds = new DataSegment({
-      id: outputs.size,
+      id: i,
       name: outputProperties[0],
       length: parseInt(outputProperties[1])
     });
 
+    console.log('new output:', ds);
+    assert.ok(ds.name.length > 0);
+    assert.ok(typeof ds.buffer.length === 'number');
     outputs.set(outputs.size, ds);
-  } else if (inputs.expectedSize === undefined) { // state: determining how many inputs into cp
-    sendOutputs(); // since outputs have just been all declared, send them
-    inputs.expectedSize = parseInt(data.toString());
-  } else if (inputs.size < inputs.expectedSize) { // state: determining properties of inputs
-    // not implemented
-    inputs.set(inputs.size, {});
-  } else if (!activeDataSegment) { // state: determining properties of next DataSegment
-    // format: <stripId>:<ledStartIdx>:<ledStopIdx>
-    const segmentProperties = data.toString().split(':');
-
-    const ds = outputs.get(segmentProperties[0]);
-
-    ds.activate({
-      startIdx: segmentProperties[1],
-      stopIdx: segmentProperties[2]
-    });
-    activeDataSegment = ds;
-  } else {
-    activeDataSegment.nom(data);
-
-    if (activeDataSegment.full) {
-      activeDataSegment = null;
-    }
   }
+
+  // determine how many inputs
+  inputs.expectedSize = parseInt(await bufferStreamUntilNewline(cpStream));
+  console.log('# of inputs:', inputs.expectedSize);
+  assert.ok(inputs.expectedSize >= 0);
+
+  // determine properties of inputs
+  for (let i = 0; i < inputs.expectedSize; i++) {
+    // format: <inputType>:<inputName>
+    // const inputProperties = (await bufferStreamUntilNewline(cpStream)).toString().split(':');
+
+    console.log('skipping input setup');
+  }
+
+  while (true) {
+    // get properties of next data segment
+    // format: <outputId>:<startIdx>:<stopIdx>
+    const segmentProperties = (await bufferStreamUntilNewline(cpStream)).toString().split(':');
+    const segmentId = parseInt(segmentProperties[0]);
+    const startIdx = parseInt(segmentProperties[1]);
+    const stopIdx = parseInt(segmentProperties[2]);
+    const segmentLength = stopIdx - startIdx;
+
+    const segmentData = await bufferStreamUntil(cpStream, buffer => {
+      return buffer.length === segmentLength;
+    });
+
+    const segmentPayload = {
+      id: segmentId,
+      startIdx,
+      buffer: new Uint8Array(segmentData).buffer // socket.io can only send ArrayBuffer type
+    };
+    assert.ok(segmentPayload.buffer.byteLength === 15);
+    io.sockets.emit('data-segment', segmentPayload);
+    outputs.get(segmentId).buffer.set(segmentData, startIdx); // save
+    console.log('data-segment', segmentId, segmentData);
+  }
+}
+
+/**
+ * @param {import('stream').Readable} stream
+ * @param {testCb} testCb - function called the buffer to test completion
+ * @returns {Promise<Buffer>}
+ * @callback testCb - returns true if buffer meets completion condition
+ * @param {Buffer} b
+ * @returns {Boolean}
+ */
+function bufferStreamUntil (stream, testCb) {
+  let b = Buffer.from(''); // start with empty buffer
+
+  return new Promise((resolve, reject) => {
+    onReadable();
+
+    function onReadable () {
+      let chunk = null;
+      while ((chunk = stream.read(1)) !== null) { // character cruncher loop
+        b = Buffer.concat([b, chunk], b.length + 1);
+        if (testCb(b)) {
+          done();
+          return; // escape character cruncher loop
+        }
+      }
+      stream.once('readable', onReadable); // must have gotten a null chunk. await new data.
+    }
+
+    function onError (err) {
+      reject(err);
+    }
+
+    function onEnd () {
+      onError(new Error('test callback never returned true!'));
+    }
+
+    function done (err) {
+      stream.removeListener('end', onEnd);
+      stream.removeListener('error', onError);
+      stream.removeListener('readable', onReadable);
+
+      if (err) {
+        reject(err);
+      } else {
+        resolve(b);
+      }
+    }
+  });
+}
+
+function bufferStreamUntilNewline (stream) {
+  return bufferStreamUntil(stream, buffer => {
+    return String.fromCharCode(buffer[buffer.length - 1]) === '\n';
+  });
 }
 
 /**
@@ -241,13 +272,13 @@ function sendOutputs (socket) {
     payload.push({
       id,
       name: ds.name,
-      buffer: ds.buffer
+      buffer: ds.buffer.buffer
     });
   }
 
   const target = socket || io.sockets;
   target.emit('outputs', payload);
-  console.log(chalk.blue('sending new outputs', payload));
+  console.log(chalk.blue('sending new outputs'), payload);
 }
 
 // Attach watchers to source files

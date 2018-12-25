@@ -25,8 +25,11 @@ socket.on('outputs', newOutputs => {
 
 socket.on('data-segment', update => {
   // when server sends an update
+  if (!outputs) {
+    return;
+  }
   const ds = outputs.get(update.id);
-  ds.buffer.set(update.buffer, update.startIdx);
+  ds.buffer.set(new Uint8Array(update.buffer), update.startIdx);
   div.innerHTML = `name: ${ds.name}<br>
     buffer: ${ds.buffer.toString()}
   `;
