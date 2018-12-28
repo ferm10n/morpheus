@@ -202,7 +202,7 @@ async function processStream (cpStream) {
     };
     io.sockets.emit('data-segment', segmentPayload);
     outputs.get(segmentId).buffer.set(segmentData, startIdx); // save
-    // console.log('data-segment', segmentId, segmentData);
+    console.log('data-segment', segmentId, segmentData);
   }
 }
 
