@@ -24,7 +24,7 @@ void theaterChaseRainbow(uint8_t);
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(4*4*4, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(83, PIN, NEO_GRB + NEO_KHZ800);
 
 // IMPORTANT: To reduce NeoPixel burnout risk, add 1000 uF capacitor across
 // pixel power leads, add 300 - 500 Ohm resistor on first pixel's data input
@@ -45,16 +45,16 @@ void setup() {
 
 void loop() {
   // Some example procedures showing how to display to the pixels:
-  colorWipe(strip.Color(255, 0, 0), 20); // Red
-  colorWipe(strip.Color(0, 255, 0), 20); // Green
-  colorWipe(strip.Color(0, 0, 255), 20); // Blue
+  // colorWipe(strip.Color(255, 0, 0), 20); // Red
+  // colorWipe(strip.Color(0, 255, 0), 20); // Green
+  // colorWipe(strip.Color(0, 0, 255), 20); // Blue
   // colorWipe(strip.Color(0, 0, 0, 255), 50); // White RGBW
   // Send a theater pixel chase in...
 //  theaterChase(strip.Color(127, 127, 127), 20); // White
 //  theaterChase(strip.Color(127, 0, 0), 20); // Red
 //  theaterChase(strip.Color(0, 0, 127), 20); // Blue
 
-//  rainbowCycle(10);
+ rainbowCycle(10);
 //  rainbow(10);
 //  theaterChaseRainbow(50);
 }
