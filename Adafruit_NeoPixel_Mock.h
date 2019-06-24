@@ -22,60 +22,101 @@ long random(long min, long max) {
 }
 
 class Adafruit_NeoPixel {
-public:
-  static volatile sig_atomic_t shouldQuit; // flag for when SIGINT was fired
-  static bool signalSet; // flag for if SIGINT handler was registered
-  std::vector<uint32_t> pixels; // container for pixel data
-  Adafruit_NeoPixel(int pixelCount, int pinNum, int mode) {
-    pixels = std::vector<uint32_t>(pixelCount, 0); // init black
-  }
-  static void doQuit (int sig) { // SIGINT handler
-    shouldQuit = 1;
-  }
-  static uint32_t Color (byte r, byte g, byte b) {
-    uint32_t color = r;
-    color <<= 8;
-    color |= g;
-    color <<= 8;
-    color |= b;
-    return color;
-  }
-  void begin () { // doesn't do much. just sets the SIGINT handler if it isn't already
-    if (!signalSet) {
-      signalSet = true;
-      signal(SIGINT, doQuit);
-    }
-  }
-  void show () {
-    std::ostringstream os; // we build a string
-    os << '\n'; // change this to '\r' if you don't want the terminal to scroll. But this is better performance wise.
-    for (int i = 0; i < pixels.size(); i++) {
-      uint32_t c = pixels.at(i);
-      // bitfidly magic
-      int r = (uint8_t)(c >> 16),
-          g = (uint8_t)(c >> 8)&0xFF,
-          b = (uint8_t)c&0xFF;
-      os << "\x1b[48;2;" << r << ";" << g << ";" << b << "m \x1b[0m";
-    }
-    std::string s = os.str();
-    std::cout << s;
-  }
-  uint16_t numPixels () {
-    return pixels.size();
-  }
-  void setPixelColor(uint8_t i, uint32_t c) {
-    if (i < pixels.size() && i > 0) pixels.at(i) = c; // protect out of range stuff
-  }
-  static void cleanup () {
-    printf("\x1b[48;2;0;0;0m\n\x1b[0m"); // ensure color is set back to normal
-  }
+  public:
+    static int instances; // counter for how many instances have been created
+    static std::ostringstream initializerPayload; // used to build the initializer message for nodejs
+    static bool sentInit;
+    
+    static uint32_t Color (byte, byte, byte);
+    
+    int id;
+    std::vector<uint32_t> pixels; // container for pixel data
+    int startIdx = 0;
+    int stopIdx = 0;
+
+    Adafruit_NeoPixel(int, int, int);
+
+    void show();
+    uint16_t numPixels();
+    void begin();
+    void setPixelColor(uint8_t i, uint32_t c);
 };
-bool Adafruit_NeoPixel::signalSet = false;
-volatile sig_atomic_t Adafruit_NeoPixel::shouldQuit = 0;
+int Adafruit_NeoPixel::instances = 0;
+std::ostringstream Adafruit_NeoPixel::initializerPayload = std::ostringstream();
+bool Adafruit_NeoPixel::sentInit = 0;
+
+uint32_t Adafruit_NeoPixel::Color (byte r, byte g, byte b) {
+  uint32_t color = r;
+  color <<= 8;
+  color |= g;
+  color <<= 8;
+  color |= b;
+  return color;
+}
+
+Adafruit_NeoPixel::Adafruit_NeoPixel(int pixelCount, int pinNum, int mode) {
+  id = Adafruit_NeoPixel::instances;
+  Adafruit_NeoPixel::instances++;
+  Adafruit_NeoPixel::initializerPayload << "strip_" << id << ":" << pixelCount * 3 << std::endl;
+
+  pixels = std::vector<uint32_t>(pixelCount, 0); // init all pixels to black
+  stopIdx = pixelCount * 3; // 3 bytes per pixel
+}
+
+void Adafruit_NeoPixel::show () {
+  if (!Adafruit_NeoPixel::sentInit) {
+    std::cout << Adafruit_NeoPixel::instances << std::endl; // how many outputs
+  
+    // is there really no good method for piping an ostream to another ostream,
+    // other than converting it to a string and then piping that?
+
+    std::string s = Adafruit_NeoPixel::initializerPayload.str(); // convert init payload to string
+    std::cout << s; // write init payload
+
+    std::cout << 0 << std::endl; // how many inputs
+
+    Adafruit_NeoPixel::sentInit = 1;
+  }
+
+  // segment header
+  std::cout << id << ':' << startIdx << ':' << stopIdx << std::endl;
+
+  // segment data
+  for (int i = 0; i < pixels.size(); i++) {
+    uint32_t c = pixels.at(i);
+    // bitfidly magic
+    int r = (uint8_t)(c >> 16),
+        g = (uint8_t)(c >> 8)&0xFF,
+        b = (uint8_t)c&0xFF;
+    putchar(r);
+    putchar(g);
+    putchar(b);
+  }
+}
+
+uint16_t Adafruit_NeoPixel::numPixels () {
+  return pixels.size();
+}
+
+void Adafruit_NeoPixel::begin () {}
+
+void Adafruit_NeoPixel::setPixelColor(uint8_t i, uint32_t c) {
+  if (i >= 0 && i < pixels.size()) {
+    pixels.at(i) = c; // protect out of range stuff
+  } 
+}
 
 void delay(uint8_t d) {
-  usleep(d * 1000);
-  if (Adafruit_NeoPixel::shouldQuit) { // should we keep going?
-    throw 'i'; // nawh
+  usleep(d * 2000);
+}
+
+void setup ();
+void loop ();
+int main() {
+  setup();
+  
+  while (true) {
+    loop();
   }
+  return 0;
 }
