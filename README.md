@@ -1,4 +1,6 @@
-# neopixel-emulator
+# Morpheus
+
+Provides a simulation environment for Neo(pixels) or other individually addressible LEDs without the need for an Arduino or other microcontroller.
 
 ## Getting started
 
