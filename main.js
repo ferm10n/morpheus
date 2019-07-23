@@ -1,4 +1,3 @@
-// IMPORTED MODULES
 const path = require('path');
 const { execSync, spawn } = require('child_process');
 const watch = require('node-watch');
@@ -40,6 +39,8 @@ const server = http.createServer(app);
 const io = new SocketIO(server);
 
 const PORT = 8080;
+
+const publicPath = path.resolve(__dirname, 'public');
 
 /**
  * Compiles the emulator and starts the child process.
@@ -246,7 +247,7 @@ function sendOutputs (socket) {
 
 // Attach watchers to source files
 watch([config.inoPath, ...config.otherSourceFiles], compileAndRun);
-watch(path.resolve('./public'), { recursive: true }, () => {
+watch(publicPath, { recursive: true }, () => {
   console.log(chalk.blue('signal-reload to client'))
   io.sockets.emit('signal-reload');
 });
@@ -255,7 +256,7 @@ watch(path.resolve('./public'), { recursive: true }, () => {
 compileAndRun();
 
 // start server:
-app.use(express.static(path.join(__dirname, 'public'))); // serve files from public folder
+app.use(express.static(publicPath)); // serve files from public folder
 const three = fs.readFileSync(require.resolve('three'));
 app.get('/lib/three.js', (req, res) => {
   res.send(three);

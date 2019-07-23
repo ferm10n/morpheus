@@ -5,18 +5,19 @@ Provides a simulation environment for Neo(pixels) or other individually addressi
 ## Getting started
 
 * Nodejs ~10.14.1, and g++ are required
-* Clone this repo and run `npm i`
-* Replace strandtest.ino with your sketch.
-  * make sure to update the properties of `config` in **main.js** accordingly. They should be self-explanitory.
+* in the arduino project, run `npm init -y` to create a package.json
+* `npm i git+https://github.com/ferm10n/morpheus.git` to add morpheus module
+* add `"start": "morpheus"` to the "scripts" part of your package.json
+* create morpheus-config.js
 * `npm start`. this will compile and run your arduino sketch.
-  * depending on what special arduino functions your sketch uses, you might need to implement them in **Adafruit_NeoPixel_mock.h**. I put some of the common ones in there already but this is the most likely place for things to fail when switching to a new sketch.
+  * depending on what special arduino functions your sketch uses, you might need to write mocks for them. I put some of the common ones in there already but this is the most likely thing to fail when switching to a new sketch.
 * implement `onDataSegment()` in **public/index.js**. See the example there for details. This gets called for every update to the LED outputs.
 * open your browser to http://localhost:8080
 
 ## Transactions
 
-* start cp
-* cp runs setup()
+* morpheus compiles and starts cp (child process)
+* cp runs arduino function setup()
   * we expect all the instances of LED strips have been initialized after this
 * before loop() starts, cp writes LED strip info to node
   * first line is how many strips N (string)

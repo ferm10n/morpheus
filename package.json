@@ -7,6 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon -w main.js main.js"
   },
+  "bin": {
+    "morpheus": "./cli.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,6 +18,7 @@
     "eslint": "^5.10.0",
     "express": "^4.16.4",
     "glob": "^7.1.4",
+    "lodash.merge": "^4.6.2",
     "node-watch": "^0.5.9",
     "nodemon": "^1.18.9",
     "socket.io": "^2.2.0",
