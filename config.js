@@ -2,13 +2,17 @@ const fs = require('fs');
 const chalk = require('chalk');
 const path = require('path');
 const merge = require('lodash.merge');
+const glob = require('glob');
+
+// look for a .ino file
+let defaultInoPath = glob.sync('*.ino')[0];
 
 // default config
 const config = {
   /**
-   * Path to .ino file
+   * Path to .ino sketch file
    */
-  inoPath: path.resolve('strandtest.ino'),
+  inoPath: defaultInoPath,
   /**
    * Other source files involved in the .ino project.
    * These will have fs watchers attached to them so they recompile when changes are made.
