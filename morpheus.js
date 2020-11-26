@@ -259,7 +259,10 @@ module.exports = function morpheus (config) {
     config,
     init () {
       // Attach watchers to source files
-      watch([config.inoPath, ...config.additionalIncludes], compileAndRun);
+      watch([
+        config.inoPath,
+        ...config.additionalIncludes
+      ], { recursive: true }, compileAndRun);
       watch(publicPath, { recursive: true }, () => {
         console.log(chalk.blue('signal-reload to client'));
         io.sockets.emit('signal-reload');

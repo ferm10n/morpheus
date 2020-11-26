@@ -15,7 +15,6 @@ const config = {
   additionalIncludes: [
     // path.resolve('file1'),
     // path.resolve('file2'),
-    path.resolve(__dirname, 'Adafruit_NeoPixel_Mock.h')
   ],
   /**
    * The .ino will be copied to a .cpp. `cppPath` stores the path to write this cpp file to.

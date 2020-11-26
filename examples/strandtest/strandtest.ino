@@ -3,7 +3,7 @@
   #include <Adafruit_NeoPixel.h>
   #include <avr/power.h>
 #else
-  #include <Adafruit_NeoPixel_Mock.h>
+  #include <mocks/Adafruit_NeoPixel_Mock.h>
 #endif
 
 #define PIN 6
