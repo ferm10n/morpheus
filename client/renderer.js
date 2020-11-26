@@ -1,14 +1,25 @@
-/* globals THREE, pixels */
+import {
+  Scene,
+  PerspectiveCamera,
+  WebGLRenderer,
+  BoxGeometry,
+  MeshBasicMaterial,
+  Mesh
+} from 'three';
+import './styles.css';
 /**
  * @typedef {import('three/src/Three')}
  */
 
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const scene = new Scene();
+const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-const renderer = new THREE.WebGLRenderer();
+const renderer = new WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.querySelector('#app').appendChild(renderer.domElement);
+const appElement = document.createElement('div');
+appElement.id = 'app';
+document.body.appendChild(appElement);
+appElement.appendChild(renderer.domElement);
 
 window.addEventListener('resize', function () {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -34,9 +45,9 @@ animate();
 class Pixel {
   constructor () {
     console.log(this);
-    this.geometry = new THREE.BoxGeometry(1, 1, 1);
-    this.material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    this.cube = new THREE.Mesh(this.geometry, this.material);
+    this.geometry = new BoxGeometry(1, 1, 1);
+    this.material = new MeshBasicMaterial({ color: 0x00ff00 });
+    this.cube = new Mesh(this.geometry, this.material);
     scene.add(this.cube);
   }
 

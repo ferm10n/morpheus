@@ -12,12 +12,16 @@
   "license": "ISC",
   "dependencies": {
     "chalk": "^2.4.1",
-    "express": "^4.16.4",
+    "css-loader": "^5.0.1",
     "glob": "^7.1.4",
+    "html-webpack-plugin": "^4.5.0",
     "lodash.mergewith": "^4.6.2",
     "node-watch": "^0.5.9",
     "socket.io": "^2.2.0",
-    "three": "^0.99.0"
+    "style-loader": "^2.0.0",
+    "three": "^0.99.0",
+    "webpack": "^4.44.2",
+    "webpack-dev-server": "^3.11.0"
   },
   "devDependencies": {
     "eslint": "^7.14.0",

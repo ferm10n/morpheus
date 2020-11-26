@@ -1,18 +1,12 @@
-const path = require('path');
 const { execSync, spawn } = require('child_process');
 const watch = require('node-watch');
 const fs = require('fs');
-const express = require('express');
-const http = require('http');
-const app = express();
-const SocketIO = require('socket.io');
 const chalk = require('chalk');
 const assert = require('assert');
 const { glob } = require('glob');
+const morpheusServer = require('./server');
 
-/**
- * @typedef {import('./config')} Config
- */
+/** @typedef {import('./config')} Config */
 
 class DataSegment {
   /**
@@ -52,14 +46,6 @@ module.exports = function morpheus (config) {
    * Data segments from the client to be sent to the child process
    */
   let inputs = new Map();
-
-  const server = http.createServer(app);
-
-  const io = new SocketIO(server);
-
-  const PORT = config.server.port;
-
-  const publicPath = path.resolve(__dirname, 'public');
 
   /**
    * Compiles the emulator and starts the child process.
@@ -104,9 +90,9 @@ module.exports = function morpheus (config) {
         }
       });
 
-      console.log(chalk.blue('compiling...'));
+      console.log(chalk.blue('compiling sketch...'));
       execSync(config.compileCommand);
-      console.log(chalk.green('compiler finished.'));
+      console.log(chalk.green('sketch compiler finished.'));
 
       // const outputStream = new Writable();
       cp = spawn(config.exePath, {
@@ -117,7 +103,7 @@ module.exports = function morpheus (config) {
         console.error(chalk.red('stream interrupted'), err);
       });
     } catch (err) {
-      console.error(chalk.red('compile failed!'));
+      console.error(chalk.red('compiling sketch failed!'));
       console.error(chalk.yellow('Waiting for changes before trying to compile again.'));
 
       if (!err.stderr || !err.stderr.toString().length === 0) { // only show error if the compiler didn't show an error
@@ -188,7 +174,7 @@ module.exports = function morpheus (config) {
         startIdx,
         buffer: new Uint8Array(segmentData).buffer // socket.io can only send ArrayBuffer type
       };
-      io.sockets.emit('data-segment', segmentPayload);
+      morpheusServer.io.sockets.emit('data-segment', segmentPayload);
       outputs.get(segmentId).buffer.set(segmentData, startIdx); // save
       // console.log('data-segment', segmentId, segmentData);
 
@@ -265,7 +251,7 @@ module.exports = function morpheus (config) {
       });
     }
 
-    const target = socket || io.sockets;
+    const target = socket || morpheusServer.io.sockets;
     target.emit('outputs', payload);
     console.log(chalk.blue('sending new outputs'), payload);
   }
@@ -278,30 +264,12 @@ module.exports = function morpheus (config) {
         config.inoPath,
         ...config.additionalIncludes
       ], { recursive: true }, compileAndRun);
-      watch(publicPath, { recursive: true }, () => {
-        console.log(chalk.blue('signal-reload to client'));
-        io.sockets.emit('signal-reload');
-      });
 
       // initial compile
       compileAndRun();
 
-      // start server:
-      app.use(express.static(publicPath)); // serve files from public folder
-      const three = fs.readFileSync(require.resolve('three'));
-      app.get('/lib/three.js', (req, res) => {
-        res.send(three);
-        res.end();
-      });
-      server.listen(PORT, '0.0.0.0', (err) => {
-        if (err) {
-          throw err;
-        }
-        console.log('server listening on hostname 0.0.0.0 with port', PORT);
-        console.log(`http://127.0.0.1:${PORT}`);
-      }); // start accepting connections!
-
-      io.on('connect', socket => {
+      morpheusServer.init(config);
+      morpheusServer.io.on('connect', socket => {
         // when a socket connects, set up event bindings
         socket.on('get-outputs', () => sendOutputs(socket));
       });

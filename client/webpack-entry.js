@@ -1,4 +1,7 @@
-/* globals pixels, outputs, createPixelsFromOutput, updatePixelsFromOutput */
+import { outputs } from './stream';
+import './renderer';
+
+/* globals pixels, createPixelsFromOutput, updatePixelsFromOutput */
 
 window.pixels = null;
 

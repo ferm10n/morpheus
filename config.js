@@ -1,4 +1,5 @@
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 // default config
 const config = {
@@ -37,9 +38,29 @@ const config = {
    */
   compileCommand: null,
 
-  server: {
-    /** the port for the server to attach to */
-    port: 8080
+  /**
+   * @type {import('webpack').Configuration & { devServer: import('webpack-dev-server').Configuration }}
+   */
+  webpack: {
+    mode: 'development',
+    entry: path.join(__dirname, 'client/webpack-entry.js'),
+    watch: true,
+    plugins: [ new HtmlWebpackPlugin() ],
+    devServer: {
+      publicPath: '/',
+      contentBase: path.join(__dirname, 'client/public'), // not used
+      port: 8080,
+      host: '0.0.0.0',
+      stats: 'minimal'
+    },
+    module: {
+      rules: [
+        {
+          test: /\.css$/,
+          use: [ 'style-loader', 'css-loader' ]
+        }
+      ]
+    }
   }
 };
 
