@@ -9,8 +9,11 @@ const config = {
    */
   inoPath: null,
   /**
-   * Other source files involved in the .ino project.
+   * Other source files/folders involved in the .ino project.
+   * They will be automatically injected into the sketch, replacing the `// MORPHEUS-INCLUDES-ANCHOR//`
+   *
    * These will have fs watchers attached to them so they recompile when changes are made.
+   * @default [ '<morpheus-path>/morpheus-mocks' ]
    */
   additionalIncludes: [
     // path.resolve('file1'),
@@ -30,7 +33,7 @@ const config = {
   /**
    * The shell command used to compile the .cpp
    * @type {string}
-   * @example 'g++ -I . -I ~/strandtest ~/strandtest/strandtest.cpp -std=c++11 -o ~/strandtest/a.out'
+   * @example 'g++ -I ~/strandtest ~/strandtest/strandtest.cpp -std=c++11 -o ~/strandtest/a.out'
    */
   compileCommand: null,
 

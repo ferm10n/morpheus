@@ -8,6 +8,7 @@ const app = express();
 const SocketIO = require('socket.io');
 const chalk = require('chalk');
 const assert = require('assert');
+const { glob } = require('glob');
 
 /**
  * @typedef {import('./config')} Config
@@ -65,8 +66,22 @@ module.exports = function morpheus (config) {
    */
   async function compileAndRun () {
     try {
-      // copy ino to cpp
-      fs.copyFileSync(config.inoPath, config.cppPath);
+      // copy ino to cpp, making modifications
+      const inoSource = fs.readFileSync(config.inoPath, 'utf-8');
+      /** additional includes, but expanding directories */
+      const morpheusIncludes = [];
+      for (const additionalInclude of config.additionalIncludes) {
+        const includeStat = fs.statSync(additionalInclude);
+        if (includeStat.isDirectory()) {
+          morpheusIncludes.push(...glob.sync(`${additionalInclude}/**/*.[h,cpp]`));
+        } else {
+          morpheusIncludes.push(additionalInclude);
+        }
+      }
+      fs.writeFileSync(
+        config.cppPath,
+        inoSource.replace('// MORPHEUS-INCLUDES-ANCHOR //', morpheusIncludes.map(i => `#include <${i}>`).join('\n'))
+      );
 
       // make sure the exe is not running before compiling
       await new Promise((resolve) => {

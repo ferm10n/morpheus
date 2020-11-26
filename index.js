@@ -5,26 +5,36 @@ const glob = require('glob');
 const path = require('path');
 
 /**
- * @param {Partial<typeof defaultConfig>} config
+ * Gets the path to the morpheus mocks folder, relative to the project.
  */
-module.exports = function (config = {}) {
-  const mergedConfig = mergeWith({}, defaultConfig, config, (objValue, srcValue) => {
-    if (objValue && objValue instanceof Array) {
-      return objValue.concat(srcValue);
-    }
-  });
-  if (!mergedConfig.inoPath) { // look for a .ino file
-    mergedConfig.inoPath = glob.sync('*.ino')[0];
-  }
-  if (!mergedConfig.cppPath) {
-    mergedConfig.cppPath = mergedConfig.inoPath.replace(/(\.ino)$/, '.cpp');
-  }
-  if (mergedConfig.additionalIncludes.length === 0) {
-    mergedConfig.additionalIncludes.concat(glob.sync(path.resolve(__dirname, './mocks')));
-  }
-  if (!mergedConfig.compileCommand) {
-    mergedConfig.compileCommand = `g++ -I ${path.resolve()} -I ${__dirname} ${mergedConfig.cppPath} -std=c++11 -o ${mergedConfig.exePath}`;
-  }
+function getRelativeMocksPath () {
+  return path.relative(path.resolve(), path.join(__dirname, 'morpheus-mocks'));
+}
 
-  return morpheus(mergedConfig);
+module.exports = {
+  /**
+   * @param {Partial<typeof defaultConfig>} config
+   */
+  Morpheus (config = {}) {
+    const mergedConfig = mergeWith({}, defaultConfig, config, (objValue, srcValue) => {
+      if (objValue && objValue instanceof Array) {
+        return objValue.concat(srcValue);
+      }
+    });
+    if (!mergedConfig.inoPath) { // look for a .ino file
+      mergedConfig.inoPath = glob.sync('*.ino')[0];
+    }
+    if (!mergedConfig.cppPath) {
+      mergedConfig.cppPath = mergedConfig.inoPath.replace(/(\.ino)$/, '.cpp');
+    }
+    if (mergedConfig.additionalIncludes.length === 0) {
+      mergedConfig.additionalIncludes.push(getRelativeMocksPath());
+    }
+    if (!mergedConfig.compileCommand) {
+      mergedConfig.compileCommand = `g++ -I ${path.resolve()} ${mergedConfig.cppPath} -std=c++11 -o ${mergedConfig.exePath}`;
+    }
+
+    return morpheus(mergedConfig);
+  },
+  getRelativeMocksPath
 };

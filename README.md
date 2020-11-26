@@ -33,3 +33,7 @@ Provides a simulation environment for Neo(pixels) or other individually addressi
   * we refer to this as a `DataSegment`
   * node uses the range of leds to determine how many bytes to read B = (M * 3)
   * B bytes are then read.
+
+## Mocks
+
+Morpheus includes some mocked arduino libraries so it can allow your sketch to run on your PC. Most of these are incomplete and are only really being implemented on an as needed basis. I'm not entirely sure how I want to implement all of them, and might ditch them in favor of an actual atmega emulator.
