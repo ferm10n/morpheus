@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "morpheus"
+    "start": "nodemon -w index.js index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "morpheus-neopixel": "file:../.."
+    "morpheus-neopixel": "file:../..",
+    "nodemon": "^2.0.6"
   }
 }

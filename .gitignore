@@ -1,3 +1,4 @@
 node_modules
 a.out
 strandtest.cpp
+.vscode
