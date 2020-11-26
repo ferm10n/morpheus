@@ -14,7 +14,7 @@
     "chalk": "^2.4.1",
     "express": "^4.16.4",
     "glob": "^7.1.4",
-    "lodash.merge": "^4.6.2",
+    "lodash.mergewith": "^4.6.2",
     "node-watch": "^0.5.9",
     "socket.io": "^2.2.0",
     "three": "^0.99.0"
