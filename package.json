@@ -22,7 +22,7 @@
     "node-watch": "^0.5.9",
     "nodemon": "^1.18.9",
     "socket.io": "^2.4.0",
-    "three": "^0.125.0"
+    "three": "^0.137.0"
   },
   "devDependencies": {
     "standard": "^12.0.1"
