@@ -1,29 +1,30 @@
-/* globals io */
+import io from 'socket.io-client';
 const socket = io();
 socket.on('connect', () => {
   socket.emit('get-outputs'); // request outputs when connected
 });
 
 /**
- * @type {Map<number, {name: string, buffer: Uint8Array}>}
+ * @type {Map<number, {name: string, buffer: Uint8Array, coords: number[][] | null }>}
  */
-let outputs = null;
+export const outputs = new Map();
 
 // when new outputs are declared
 socket.on('outputs', newOutputs => {
   // when server sends outputs
-  outputs = new Map();
   for (let output of newOutputs) { // extract data out of outputs
+    console.log(output);
     outputs.set(output.id, {
       name: output.name,
-      buffer: new Uint8Array(output.buffer)
+      buffer: new Uint8Array(output.buffer),
+      coords: output.coords || null,
     });
   }
 });
 
 // when update is received
 socket.on('data-segment', update => {
-  if (!outputs) return;
+  if (outputs.size === 0) return;
 
   const ds = outputs.get(update.id);
   ds.buffer.set(new Uint8Array(update.buffer), update.startIdx);

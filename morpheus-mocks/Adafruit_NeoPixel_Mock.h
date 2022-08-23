@@ -106,10 +106,6 @@ void Adafruit_NeoPixel::setPixelColor(uint8_t i, uint32_t c) {
   } 
 }
 
-void delay(uint8_t d) {
-  usleep(d * 2000);
-}
-
 void setup ();
 void loop ();
 int main() {
@@ -120,3 +116,4 @@ int main() {
   }
   return 0;
 }
+

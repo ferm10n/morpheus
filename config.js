@@ -1,46 +1,39 @@
-const fs = require('fs');
-const chalk = require('chalk');
 const path = require('path');
-const merge = require('lodash.merge');
-const glob = require('glob');
-
-// look for a .ino file
-let defaultInoPath = glob.sync('*.ino')[0];
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 // default config
 const config = {
-  /**
-   * Path to .ino sketch file
-   */
-  inoPath: defaultInoPath,
-  /**
-   * Other source files involved in the .ino project.
-   * These will have fs watchers attached to them so they recompile when changes are made.
-   */
-  otherSourceFiles: [
-    // path.resolve('file1'),
-    // path.resolve('file2'),
-    path.resolve(__dirname, 'Adafruit_NeoPixel_Mock.h')
-  ],
-  /**
-   * The .ino will be copied to a .cpp. Stores the path of this
-   */
+  inoPath: null,
+  additionalIncludes: [],
   cppPath: null,
-  /**
-   * Path to compile and run the exe from
-   */
   exePath: path.resolve('./a.out'),
-  /**
-   * The shell command used to compile the .cpp
-   */
-  compileCommand: null
-};
-config.cppPath = config.inoPath.replace(/(\.ino)$/, '.cpp');
-config.compileCommand = `g++ -I . -I ${__dirname} ${config.cppPath} -std=c++11 -o ${config.exePath}`;
+  compileCommand: null,
 
-const userConfigPath = path.resolve('morpheus-config.js');
-if (fs.existsSync(userConfigPath)) {
-  merge(config, require(userConfigPath));
-}
+  webpack: {
+    mode: 'development',
+    entry: path.join(__dirname, 'client/webpack-entry.js'),
+    watch: true,
+    plugins: [ new HtmlWebpackPlugin() ],
+    devServer: {
+      host: '0.0.0.0',
+      port: 'auto',
+      devMiddleware: {
+        publicPath: '/',
+        stats: 'minimal'
+      },
+      static: {
+        directory: path.join(__dirname, 'client/public') // not used
+      }
+    },
+    module: {
+      rules: [
+        {
+          test: /\.css$/,
+          use: [ 'style-loader', 'css-loader' ]
+        }
+      ]
+    }
+  }
+};
 
 module.exports = config;

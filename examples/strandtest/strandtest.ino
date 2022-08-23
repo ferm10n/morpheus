@@ -3,7 +3,7 @@
   #include <Adafruit_NeoPixel.h>
   #include <avr/power.h>
 #else
-  #include <Adafruit_NeoPixel_Mock.h>
+// MORPHEUS-INCLUDES-ANCHOR //
 #endif
 
 #define PIN 6
