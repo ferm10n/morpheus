@@ -1,5 +1,5 @@
 const { execSync, spawn } = require('child_process');
-const watch = require('node-watch');
+const chokidar = require('chokidar');
 const fs = require('fs');
 const chalk = require('chalk');
 const assert = require('assert');
@@ -260,10 +260,11 @@ module.exports = function morpheus (config) {
     config,
     init () {
       // Attach watchers to source files
-      watch([
+      const watcher = chokidar.watch([
         config.inoPath,
         ...config.additionalIncludes
-      ], { recursive: true }, compileAndRun);
+      ]);
+      watcher.on('change', compileAndRun);
 
       // initial compile
       compileAndRun();

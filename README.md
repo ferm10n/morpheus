@@ -4,7 +4,7 @@ Provides a simulation environment for Neo(pixels) or other individually addressi
 
 ## Getting started
 
-* Nodejs ~10.14.1, and g++ are required
+* Nodejs ^12.13.0, and g++ are required
 * in the arduino project, run `npm init -y` to create a package.json
 * `npm i git+https://github.com/ferm10n/morpheus.git` to add morpheus module
 * add `"start": "morpheus"` to the "scripts" part of your package.json

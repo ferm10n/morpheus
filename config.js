@@ -47,11 +47,15 @@ const config = {
     watch: true,
     plugins: [ new HtmlWebpackPlugin() ],
     devServer: {
-      publicPath: '/',
-      contentBase: path.join(__dirname, 'client/public'), // not used
-      port: 8080,
       host: '0.0.0.0',
-      stats: 'minimal'
+      port: 'auto',
+      devMiddleware: {
+        publicPath: '/',
+        stats: 'minimal'
+      },
+      static: {
+        directory: path.join(__dirname, 'client/public') // not used
+      }
     },
     module: {
       rules: [

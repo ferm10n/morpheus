@@ -11,10 +11,13 @@ module.exports = {
   init (config) {
     const compiler = webpack(config.webpack);
     config.webpack.devServer.onListening = listeningWds => {
-      io.attach(listeningWds.listeningApp);
+      io.attach(listeningWds.server);
     };
-    const wds = new WebpackDevServer(compiler, config.webpack.devServer);
-    wds.listen(config.webpack.devServer.port, config.webpack.devServer.host);
+    const wds = new WebpackDevServer(config.webpack.devServer, compiler);
+    wds.start(config.webpack.devServer.port, config.webpack.devServer.host).catch(err => {
+      console.error('Failed to start Webpack Dev Server', err);
+      process.exit(1);
+    });
   },
   io
 };
