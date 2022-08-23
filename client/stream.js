@@ -5,7 +5,7 @@ socket.on('connect', () => {
 });
 
 /**
- * @type {Map<number, {name: string, buffer: Uint8Array}>}
+ * @type {Map<number, {name: string, buffer: Uint8Array, coords: number[][] | null }>}
  */
 export const outputs = new Map();
 
@@ -13,9 +13,11 @@ export const outputs = new Map();
 socket.on('outputs', newOutputs => {
   // when server sends outputs
   for (let output of newOutputs) { // extract data out of outputs
+    console.log(output);
     outputs.set(output.id, {
       name: output.name,
-      buffer: new Uint8Array(output.buffer)
+      buffer: new Uint8Array(output.buffer),
+      coords: output.coords || null,
     });
   }
 });

@@ -24,7 +24,6 @@
     "webpack-dev-server": "^4.10.0"
   },
   "devDependencies": {
-    "eslint": "^7.14.0",
     "standard": "^17.0.0"
   },
   "repository": {

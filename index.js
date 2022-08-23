@@ -13,7 +13,7 @@ function getRelativeMocksPath () {
 
 module.exports = {
   /**
-   * @param {Partial<typeof defaultConfig>} config
+   * @param {Partial<import('./config').MorpheusConfig>} config
    */
   Morpheus (config = {}) {
     const mergedConfig = mergeWith({}, defaultConfig, config, (objValue, srcValue) => {

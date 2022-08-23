@@ -1,18 +1,25 @@
 # Morpheus
 
-Provides a simulation environment for Neo(pixels) or other individually addressible LEDs without the need for an Arduino or other microcontroller.
+Provides a simulation environment for Neo(pixels) or other individually addressible LEDs without the need for an Arduino or other microcontroller hardware. Preview LED patterns directly from your browser, edit and see your changes live!
 
-## Getting started
+> HEADS UP! I'm building this project in my free time and it's kinda jank/inconsistent. I hope that enough of the vision for it is captured here until I get around to polishing it more :)
+
+## Quick start
+
+- Clone this project, make sure you have node ^12.13.0
+- cd to examples/strandtest and `npm ci`
+- `npm start`
+
+## Adding morpheus to an existing Arduino project
 
 * Nodejs ^12.13.0, and g++ are required
 * in the arduino project, run `npm init -y` to create a package.json
 * `npm i git+https://github.com/ferm10n/morpheus.git` to add morpheus module
-* add `"start": "morpheus"` to the "scripts" part of your package.json
-* create morpheus-config.js
-* `npm start`. this will compile and run your arduino sketch.
+* create an `index.js`, [like this one](./examples/index.js)
+* edit the `coords` in `index.js` so that it contains the coordinates of your LEDs in 3d space
+* `node index.js`. this will compile and run your arduino sketch.
   * depending on what special arduino functions your sketch uses, you might need to write mocks for them. I put some of the common ones in there already but this is the most likely thing to fail when switching to a new sketch.
-* implement `onDataSegment()` in **public/index.js**. See the example there for details. This gets called for every update to the LED outputs.
-* open your browser to http://localhost:8080
+* open your browser to the URL printed to your console
 
 ## Transactions
 

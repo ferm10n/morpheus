@@ -6,16 +6,18 @@ const assert = require('assert');
 const { glob } = require('glob');
 const morpheusServer = require('./server');
 
-/** @typedef {import('./config')} Config */
+/** @typedef {import('./config').MorpheusConfig} Config */
+/** @typedef {import('./config').LedOutputConfig} LedOutputConfig */
 
 class DataSegment {
   /**
-   * @param {{id: number, name: string, length: number}}
+   * @param {{id: number, name: string, length: number, coords: LedOutputConfig['coords'] | null }}
    */
-  constructor ({ id, name, length }) {
+  constructor ({ id, name, length, coords }) {
     this.id = id;
     this.name = name;
     this.buffer = new Uint8Array(length);
+    this.coords = coords;
   }
 }
 
@@ -134,7 +136,8 @@ module.exports = function morpheus (config) {
       const ds = new DataSegment({
         id: i,
         name: outputProperties[0],
-        length: parseInt(outputProperties[1])
+        length: parseInt(outputProperties[1]),
+        coords: (config.outputs || {})[outputProperties[0]]?.coords || null,
       });
 
       console.log('new output:', ds);
@@ -247,7 +250,8 @@ module.exports = function morpheus (config) {
       payload.push({
         id,
         name: ds.name,
-        buffer: ds.buffer.buffer
+        buffer: ds.buffer.buffer,
+        coords: ds.coords,
       });
     }
 
