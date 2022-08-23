@@ -122,12 +122,12 @@ module.exports = function morpheus (config) {
     inputs = new Map();
 
     // determine how many outputs
-    outputs.expectedSize = parseInt(await bufferStreamUntilNewline(cpStream));
-    console.log('# of outputs:', outputs.expectedSize);
-    assert.ok(outputs.expectedSize >= 0);
+    let expectedOutputs = parseInt(await bufferStreamUntilNewline(cpStream));
+    console.log('# of outputs:', expectedOutputs);
+    assert.ok(expectedOutputs >= 0);
 
     // determine properties of outputs
-    for (let i = 0; i < outputs.expectedSize; i++) {
+    for (let i = 0; i < expectedOutputs; i++) {
       // format: <stripName>:<length>
       const outputProperties = (await bufferStreamUntilNewline(cpStream)).toString().split(':');
 
@@ -144,12 +144,12 @@ module.exports = function morpheus (config) {
     }
 
     // determine how many inputs
-    inputs.expectedSize = parseInt(await bufferStreamUntilNewline(cpStream));
-    console.log('# of inputs:', inputs.expectedSize);
-    assert.ok(inputs.expectedSize >= 0);
+    let expectedInputs = parseInt(await bufferStreamUntilNewline(cpStream));
+    console.log('# of inputs:', expectedInputs);
+    assert.ok(expectedInputs >= 0);
 
     // determine properties of inputs
-    for (let i = 0; i < inputs.expectedSize; i++) {
+    for (let i = 0; i < expectedInputs; i++) {
       // format: <inputType>:<inputName>
       // const inputProperties = (await bufferStreamUntilNewline(cpStream)).toString().split(':');
 
