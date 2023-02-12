@@ -12,6 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "morpheus-neopixel": "file:../..",
-    "nodemon": "^2.0.6"
+    "nodemon": "^2.0.20"
   }
 }
