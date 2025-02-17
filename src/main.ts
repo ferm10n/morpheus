@@ -3,16 +3,41 @@ import './style.css';
 import * as THREE from 'three';
 
 import Stats from 'three/addons/libs/stats.module.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+import GUI from 'lil-gui';
 
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 let camera: THREE.PerspectiveCamera;
 let scene: THREE.Scene;
 let renderer: THREE.WebGLRenderer;
-let startTime: number;
 let object: THREE.Mesh;
 let stats: Stats;
+
+let memory: {
+  startTime: number;
+  cameraPosition: THREE.Vector3;
+  cameraZoom: number;
+  orbitTarget: THREE.Vector3;
+};
+
+const defaultCameraPosition = new THREE.Vector3(0, 1.3, 3);
+const defaultCameraZoom = 1;
+const defaultOrbitTarget = new THREE.Vector3(0, 1, 0);
+
+if (import.meta.hot) {
+  console.log('memory', import.meta.hot.data.memory);
+  memory = import.meta.hot.data.memory;
+  if (!memory) {
+    memory = {
+      // defaults
+      startTime: Date.now(),
+      cameraPosition: defaultCameraPosition.clone(),
+      cameraZoom: defaultCameraZoom,
+      orbitTarget: defaultOrbitTarget.clone(),
+    };
+  }
+  import.meta.hot.accept();
+}
 
 init();
 
@@ -24,39 +49,42 @@ function init() {
     16,
   );
 
-  camera.position.set(0, 1.3, 3);
+  camera.position.copy(memory.cameraPosition);
+  camera.zoom = memory.cameraZoom;
+  camera.updateProjectionMatrix();
 
   scene = new THREE.Scene();
 
   // Lights
+  {
+    scene.add(new THREE.AmbientLight(0xcccccc));
 
-  scene.add(new THREE.AmbientLight(0xcccccc));
+    const spotLight = new THREE.SpotLight(0xffffff, 60);
+    spotLight.angle = Math.PI / 5;
+    spotLight.penumbra = 0.2;
+    spotLight.position.set(2, 3, 3);
+    spotLight.castShadow = true;
+    spotLight.shadow.camera.near = 3;
+    spotLight.shadow.camera.far = 10;
+    spotLight.shadow.mapSize.width = 1024;
+    spotLight.shadow.mapSize.height = 1024;
+    scene.add(spotLight);
 
-  const spotLight = new THREE.SpotLight(0xffffff, 60);
-  spotLight.angle = Math.PI / 5;
-  spotLight.penumbra = 0.2;
-  spotLight.position.set(2, 3, 3);
-  spotLight.castShadow = true;
-  spotLight.shadow.camera.near = 3;
-  spotLight.shadow.camera.far = 10;
-  spotLight.shadow.mapSize.width = 1024;
-  spotLight.shadow.mapSize.height = 1024;
-  scene.add(spotLight);
+    const dirLight = new THREE.DirectionalLight(0x55505a, 3);
+    dirLight.position.set(0, 3, 0);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 10;
 
-  const dirLight = new THREE.DirectionalLight(0x55505a, 3);
-  dirLight.position.set(0, 3, 0);
-  dirLight.castShadow = true;
-  dirLight.shadow.camera.near = 1;
-  dirLight.shadow.camera.far = 10;
+    dirLight.shadow.camera.right = 1;
+    dirLight.shadow.camera.left = -1;
+    dirLight.shadow.camera.top = 1;
+    dirLight.shadow.camera.bottom = -1;
 
-  dirLight.shadow.camera.right = 1;
-  dirLight.shadow.camera.left = -1;
-  dirLight.shadow.camera.top = 1;
-  dirLight.shadow.camera.bottom = -1;
-
-  dirLight.shadow.mapSize.width = 1024;
-  dirLight.shadow.mapSize.height = 1024;
-  scene.add(dirLight);
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    scene.add(dirLight);
+  }
 
   // ***** Clipping planes: *****
 
@@ -92,22 +120,24 @@ function init() {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Renderer
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setAnimationLoop(animate);
-  renderer.shadowMap.enabled = true;
-  document.body.appendChild(renderer.domElement);
-
-  window.addEventListener('resize', onWindowResize);
-
-  // ***** Clipping setup (renderer): *****
   const globalPlanes = [globalPlane];
   const Empty = Object.freeze<THREE.Plane[]>([]) as THREE.Plane[];
-  renderer.clippingPlanes = Empty; // GUI sets it to globalPlanes
-  renderer.localClippingEnabled = true;
+
+  // Renderer
+  {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setAnimationLoop(animate);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    window.addEventListener('resize', onWindowResize);
+
+    // ***** Clipping setup (renderer): *****
+    renderer.clippingPlanes = Empty; // GUI sets it to globalPlanes
+    renderer.localClippingEnabled = true;
+  }
 
   // Stats
 
@@ -117,17 +147,24 @@ function init() {
   // Controls
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 1, 0);
+  controls.target.copy(memory.orbitTarget);
   controls.update();
 
   // GUI
-
-  const gui = new GUI(),
-    props = {
+  {
+    const gui = new GUI();
+    const props = {
       alphaToCoverage: true,
-    },
-    folderLocal = gui.addFolder('Local Clipping'),
-    propsLocal = {
+      home: () => {
+        camera.position.copy(defaultCameraPosition);
+        camera.zoom = defaultCameraZoom;
+        camera.updateProjectionMatrix();
+        controls.target.copy(defaultOrbitTarget);
+        controls.update();
+      },
+    };
+    const folderLocal = gui.addFolder('Local Clipping');
+    const propsLocal = {
       get Enabled() {
         return renderer.localClippingEnabled;
       },
@@ -148,9 +185,9 @@ function init() {
       set Plane(v) {
         localPlane.constant = v;
       },
-    },
-    folderGlobal = gui.addFolder('Global Clipping'),
-    propsGlobal = {
+    };
+    const folderGlobal = gui.addFolder('Global Clipping');
+    const propsGlobal = {
       get Enabled() {
         return renderer.clippingPlanes !== Empty;
       },
@@ -166,23 +203,39 @@ function init() {
       },
     };
 
-  gui.add(props, 'alphaToCoverage').onChange(function (value) {
-    ground.material.alphaToCoverage = value;
-    ground.material.needsUpdate = true;
+    gui.add(props, 'alphaToCoverage').onChange(function (value: boolean) {
+      ground.material.alphaToCoverage = value;
+      ground.material.needsUpdate = true;
 
-    material.alphaToCoverage = value;
-    material.needsUpdate = true;
-  });
-  folderLocal.add(propsLocal, 'Enabled');
-  folderLocal.add(propsLocal, 'Shadows');
-  folderLocal.add(propsLocal, 'Plane', 0.3, 1.25);
+      material.alphaToCoverage = value;
+      material.needsUpdate = true;
+    });
+    gui.add(props, 'home');
+    folderLocal.add(propsLocal, 'Enabled');
+    folderLocal.add(propsLocal, 'Shadows');
+    folderLocal.add(propsLocal, 'Plane', 0.3, 1.25);
 
-  folderGlobal.add(propsGlobal, 'Enabled');
-  folderGlobal.add(propsGlobal, 'Plane', -0.4, 3);
+    folderGlobal.add(propsGlobal, 'Enabled');
+    folderGlobal.add(propsGlobal, 'Plane', -0.4, 3);
+  }
 
-  // Start
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      renderer.dispose();
+      if (document.body.contains(renderer.domElement))
+        document.body.removeChild(renderer.domElement);
+      if (document.body.contains(stats.dom))
+        document.body.removeChild(stats.dom);
+      window.removeEventListener('resize', onWindowResize);
 
-  startTime = Date.now();
+      import.meta.hot!.data.memory = {
+        startTime: memory.startTime,
+        cameraPosition: camera.position.clone(),
+        cameraZoom: camera.zoom,
+        orbitTarget: controls.target.clone(),
+      };
+    });
+  }
 }
 
 function onWindowResize() {
@@ -194,7 +247,7 @@ function onWindowResize() {
 
 function animate() {
   const currentTime = Date.now();
-  const time = (currentTime - startTime) / 1000;
+  const time = (currentTime - memory.startTime) / 1000;
 
   object.position.y = 0.8;
   object.rotation.x = time * 0.5;
