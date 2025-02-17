@@ -18,11 +18,13 @@ let memory: {
   cameraPosition: THREE.Vector3;
   cameraZoom: number;
   orbitTarget: THREE.Vector3;
+  backgroundColor: number;
 };
 
 const defaultCameraPosition = new THREE.Vector3(0, 1.3, 3);
 const defaultCameraZoom = 1;
 const defaultOrbitTarget = new THREE.Vector3(0, 1, 0);
+const defaultBackgroundColor = 0x111111;
 
 if (import.meta.hot) {
   console.log('memory', import.meta.hot.data.memory);
@@ -34,6 +36,7 @@ if (import.meta.hot) {
       cameraPosition: defaultCameraPosition.clone(),
       cameraZoom: defaultCameraZoom,
       orbitTarget: defaultOrbitTarget.clone(),
+      backgroundColor: defaultBackgroundColor,
     };
   }
   import.meta.hot.accept();
@@ -54,6 +57,7 @@ function init() {
   camera.updateProjectionMatrix();
 
   scene = new THREE.Scene();
+  scene.background = new THREE.Color(memory.backgroundColor);
 
   // Lights
   {
@@ -94,15 +98,9 @@ function init() {
   // Geometry
 
   const material = new THREE.MeshPhongMaterial({
-    color: 0x80ee10,
+    color: 0x000000,
     shininess: 100,
     side: THREE.DoubleSide,
-
-    // ***** Clipping setup (material): *****
-    clippingPlanes: [localPlane],
-    clipShadows: true,
-
-    alphaToCoverage: true,
   });
 
   const geometry = new THREE.TorusKnotGeometry(0.4, 0.08, 95, 20);
@@ -120,9 +118,6 @@ function init() {
   ground.receiveShadow = true;
   scene.add(ground);
 
-  const globalPlanes = [globalPlane];
-  const Empty = Object.freeze<THREE.Plane[]>([]) as THREE.Plane[];
-
   // Renderer
   {
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -133,10 +128,6 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     window.addEventListener('resize', onWindowResize);
-
-    // ***** Clipping setup (renderer): *****
-    renderer.clippingPlanes = Empty; // GUI sets it to globalPlanes
-    renderer.localClippingEnabled = true;
   }
 
   // Stats
@@ -151,72 +142,31 @@ function init() {
   controls.update();
 
   // GUI
+  const gui = new GUI();
+  const props = {
+    reset: () => {
+      camera.position.copy(defaultCameraPosition);
+      camera.zoom = defaultCameraZoom;
+      camera.updateProjectionMatrix();
+      controls.target.copy(defaultOrbitTarget);
+      controls.update();
+      props.backgroundColor = defaultBackgroundColor;
+    },
+    get backgroundColor () {
+      return (scene.background as THREE.Color).getHex();
+    },
+    set backgroundColor (value: number) {
+      scene.background = new THREE.Color(value);
+    },
+  };
   {
-    const gui = new GUI();
-    const props = {
-      alphaToCoverage: true,
-      home: () => {
-        camera.position.copy(defaultCameraPosition);
-        camera.zoom = defaultCameraZoom;
-        camera.updateProjectionMatrix();
-        controls.target.copy(defaultOrbitTarget);
-        controls.update();
-      },
-    };
-    const folderLocal = gui.addFolder('Local Clipping');
-    const propsLocal = {
-      get Enabled() {
-        return renderer.localClippingEnabled;
-      },
-      set Enabled(v) {
-        renderer.localClippingEnabled = v;
-      },
 
-      get Shadows() {
-        return material.clipShadows;
-      },
-      set Shadows(v) {
-        material.clipShadows = v;
-      },
+    gui.addColor(props, 'backgroundColor').onChange((value: number) => {
+      scene.background = new THREE.Color().setHex(value);
+    }).listen();
 
-      get Plane() {
-        return localPlane.constant;
-      },
-      set Plane(v) {
-        localPlane.constant = v;
-      },
-    };
-    const folderGlobal = gui.addFolder('Global Clipping');
-    const propsGlobal = {
-      get Enabled() {
-        return renderer.clippingPlanes !== Empty;
-      },
-      set Enabled(v) {
-        renderer.clippingPlanes = v ? globalPlanes : Empty;
-      },
-
-      get Plane() {
-        return globalPlane.constant;
-      },
-      set Plane(v) {
-        globalPlane.constant = v;
-      },
-    };
-
-    gui.add(props, 'alphaToCoverage').onChange(function (value: boolean) {
-      ground.material.alphaToCoverage = value;
-      ground.material.needsUpdate = true;
-
-      material.alphaToCoverage = value;
-      material.needsUpdate = true;
-    });
-    gui.add(props, 'home');
-    folderLocal.add(propsLocal, 'Enabled');
-    folderLocal.add(propsLocal, 'Shadows');
-    folderLocal.add(propsLocal, 'Plane', 0.3, 1.25);
-
-    folderGlobal.add(propsGlobal, 'Enabled');
-    folderGlobal.add(propsGlobal, 'Plane', -0.4, 3);
+    gui.reset();
+    gui.add(props, 'reset');
   }
 
   if (import.meta.hot) {
@@ -233,6 +183,7 @@ function init() {
         cameraPosition: camera.position.clone(),
         cameraZoom: camera.zoom,
         orbitTarget: controls.target.clone(),
+        backgroundColor: (scene.background as THREE.Color).getHex(),
       };
     });
   }
