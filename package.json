@@ -1,37 +1,21 @@
 {
-  "name": "morpheus-neopixel",
-  "version": "1.0.0",
-  "description": "This serves as a drop in replacement for Adafruit_NeoPixel.h, allowing you to experiment with patterns and such without an arduino or other microcontroller!",
-  "main": "index.js",
+  "name": "morpheus-new",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "lint": "eslint . --format codeframe",
-    "lint:fix": "npm run --silent lint -- --fix"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "chalk": "^2.4.1",
-    "chokidar": "^3.5.3",
-    "css-loader": "^5.0.1",
-    "glob": "^7.1.4",
-    "html-webpack-plugin": "^4.5.0",
-    "lodash.mergewith": "^4.6.2",
-    "socket.io": "^2.5.0",
-    "style-loader": "^2.0.0",
-    "three": "^0.143.0",
-    "webpack": "^4.44.2",
-    "webpack-dev-server": "^4.10.0"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "format": "prettier . --write"
   },
   "devDependencies": {
-    "standard": "^17.0.0"
+    "@types/three": "^0.173.0",
+    "prettier": "3.5.1",
+    "typescript": "~5.7.2",
+    "vite": "^6.1.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/ferm10n/neopixel-emulator.git"
-  },
-  "bugs": {
-    "url": "https://github.com/ferm10n/neopixel-emulator/issues"
-  },
-  "homepage": "https://github.com/ferm10n/neopixel-emulator#readme"
+  "dependencies": {
+    "three": "^0.173.0"
+  }
 }
